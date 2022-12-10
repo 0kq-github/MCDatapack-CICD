@@ -54,21 +54,22 @@ def listner():
   global datapack_path
   #logger.info(f"Received webhook: {request.json}")
   if request.method == "POST":
-    if config.VALIDATE_DATAPACK:
-      error = validate_datapack()
-      if not config.IGNORE_VALERROR and error:
-        return
-    Repo(datapack_path).remote().pull()
     data = request.json
-    for c in data['commits']:
-      logger.info(f"New Commit! {c['message']}")
-    if config.TELL_INFO:
-      mc = MCRcon(config.RCON_ADDRESS,config.RCON_ADDRESS,config.RCON_PORT)
-      for c in data["commits"]:
-        mc.command('tellraw @a {"text":"[NEW COMMIT] {}"}'.format(c["message"]))
-    if config.AUTO_RELOAD:
-      mc = MCRcon(config.RCON_ADDRESS,config.RCON_ADDRESS,config.RCON_PORT)
-      mc.command("reload")
+    if data["ref"] == "refs/heads/"+config.BRANCH:
+      if config.VALIDATE_DATAPACK:
+        error = validate_datapack()
+        if not config.IGNORE_VALERROR and error:
+          return
+      Repo(datapack_path).remote().pull()
+      for c in data['commits']:
+        logger.info(f"New Commit! {c['message']}")
+      if config.TELL_INFO:
+        mc = MCRcon(config.RCON_ADDRESS,config.RCON_ADDRESS,config.RCON_PORT)
+        for c in data["commits"]:
+          mc.command('tellraw @a {"text":"[NEW COMMIT] {}"}'.format(c["message"]))
+      if config.AUTO_RELOAD:
+        mc = MCRcon(config.RCON_ADDRESS,config.RCON_ADDRESS,config.RCON_PORT)
+        mc.command("reload")
   return "",200
 
 if __name__ == "__main__":

@@ -1,6 +1,9 @@
 #ポート
 LISTEN_PORT = 8080
 
+#ブランチ
+BRANCH = "develop"
+
 #データパックの検証
 VALIDATE_DATAPACK = True
 
