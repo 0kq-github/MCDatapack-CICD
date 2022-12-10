@@ -59,8 +59,10 @@ def listner():
       if not config.IGNORE_VALERROR and error:
         return
     Repo(datapack_path).remote().pull()
+    data = request.json
+    for c in data['commits']:
+      logger.info(f"New Commit! {c['message']}")
     if config.TELL_INFO:
-      data = json.loads(request.json)
       mc = MCRcon(config.RCON_ADDRESS,config.RCON_ADDRESS,config.RCON_PORT)
       for c in data["commits"]:
         mc.command('tellraw @a {"text":"[NEW COMMIT] {}"}'.format(c["message"]))
