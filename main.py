@@ -71,5 +71,5 @@ def listner():
 
 if __name__ == "__main__":
   setup_logging()
-  app.run(debug=True,port=config.LISTEN_PORT)
+  app.run(debug=True,host="0.0.0.0",port=config.LISTEN_PORT)
   
