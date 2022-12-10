@@ -41,11 +41,10 @@ def validate_datapack():
         mc.command( \
 'tellraw @a {"text":"[DATAPACK_VALIDATION_ERROR] \n\
 ================\n\
-File: {}\n\
-{}\n\
+File: %s\n\
+%s\n\
 ================"}'\
-.format(i,e)
-        )
+% (i,e))
 
   return error
 
@@ -66,7 +65,7 @@ def listner():
       if config.TELL_INFO:
         mc = MCRcon(config.RCON_ADDRESS,config.RCON_ADDRESS,config.RCON_PORT)
         for c in data["commits"]:
-          mc.command('tellraw @a {"text":"[NEW COMMIT] {}"}'.format(c["message"]))
+          mc.command('tellraw @a {"text":"[NEW COMMIT] %s"}' % c["message"])
       if config.AUTO_RELOAD:
         mc = MCRcon(config.RCON_ADDRESS,config.RCON_ADDRESS,config.RCON_PORT)
         mc.command("reload")
