@@ -37,7 +37,7 @@ def validate_datapack():
       error = True
       logger.error(f"File: {i} {e}")
       if config.TELL_INFO:
-        with MCRcon(config.RCON_ADDRESS,config.RCON_ADDRESS,config.RCON_PORT) as mcr:
+        with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
           mcr.command( \
 'tellraw @a {"text":"[DATAPACK_VALIDATION_ERROR] \n\
 ================\n\
@@ -63,11 +63,11 @@ def listner():
       for c in data['commits']:
         logger.info(f"New Commit! {c['message']}")
       if config.TELL_INFO:
-        with MCRcon(config.RCON_ADDRESS,config.RCON_ADDRESS,config.RCON_PORT) as mcr:
+        with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
           for c in data["commits"]:
             mcr.command('tellraw @a {"text":"[NEW COMMIT] %s"}' % c["message"])
       if config.AUTO_RELOAD:
-        with MCRcon(config.RCON_ADDRESS,config.RCON_ADDRESS,config.RCON_PORT) as mcr:
+        with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
           mcr.command("reload")
   return "",200
 
