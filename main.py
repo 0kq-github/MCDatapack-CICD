@@ -65,7 +65,7 @@ def listner():
       if config.TELL_INFO:
         with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
           for c in data["commits"]:
-            mcr.command('tellraw @a {"text":"[NEW COMMIT] %s"}' % c["message"])
+            mcr.command('tellraw @a {"text":"[NEW COMMIT] %s"}' % c["message"].replace("\"","\\\""))
       if config.AUTO_RELOAD:
         with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
           mcr.command("reload")
