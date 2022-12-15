@@ -2,25 +2,29 @@
 LISTEN_PORT = 8080
 
 #ブランチ
-BRANCH = "develop"
+BRANCH = "main"
 
 #データパックの検証
-VALIDATE_DATAPACK = True
+#ローカルで検証を行う
+LOCAL_VALIDATE_DATAPACK = True
+#GitHub Actionsで検証を行う
+#この項目が有効な場合pullはActionsの後に実行されます
+GITHUB_ACTIONS = True
 
 #検証時のエラーを無視してサーバーへの適用を行うかどうか
-IGNORE_VALERROR = False
+IGNORE_VALIDATE_ERROR = False
 
-#Minecraftサーバーのルートディレクトリへのパス
-MCSERVER_PATH = "~/server"
+#Minecraftサーバーのルートディレクトリへの絶対パス
+MCSERVER_PATH = "path_to_server"
 
 #データパック名 (datapacksフォルダ全体の場合は記入しない)
 DATAPACK_NAME = ""
 
 #自動リロード (RCON設定が必須)
-AUTO_RELOAD = False
+AUTO_RELOAD = True
 
 #サーバー内への通知 (RCON設定が必須)
-TELL_INFO = False
+TELL_INFO = True
 
 #RCON設定
 RCON_ADDRESS = "127.0.0.1"
