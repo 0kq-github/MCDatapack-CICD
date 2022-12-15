@@ -6,7 +6,6 @@ import config
 import logging
 import sys
 from git import Repo
-import time
 
 app = Flask(__name__)
 mc = mecha.Mecha()
@@ -40,7 +39,6 @@ def validate_datapack():
       if config.TELL_INFO:
         with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
           cmd = 'tellraw @a [{"text":"["},{"text":"DATAPACK VALIDATION ERROR","color":"red"},{"text":"] File: %s","color":"white"}]' % (i.replace("\\","/"))
-          cmd = cmd
           mcr.command(cmd)
   return error
 
