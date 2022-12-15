@@ -2,6 +2,7 @@
  GitHubからリアルタイムにデータパックを検証/同期するツール
 
 ## Installation
+Windows環境での動作は未確認です
  1. Python3.10以上をインストール
  2. `pip install -r requirements.txt`で必要なパッケージのインストール
  3. `config.py`の編集
