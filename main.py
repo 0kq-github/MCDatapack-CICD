@@ -8,7 +8,6 @@ import config
 import logging
 import sys
 from git import Repo
-import json
 
 app = FastAPI()
 mc = mecha.Mecha()
@@ -41,8 +40,12 @@ def validate_datapack():
       error = True
       logger.error(f"File: {i} {e}")
       if config.TELL_INFO:
+        if config.TELL_TAG:
+          tag = f"[tag={config.TELL_TAG}]"
+        else:
+          tag = ""
         with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
-          cmd = 'tellraw @a [{"text":"["},{"text":"VALIDATION ERROR","color":"red"},{"text":"] File: %s","color":"white"}]' % (i.replace("\\","/"))
+          cmd = 'tellraw @a%s [{"text":"["},{"text":"VALIDATION ERROR","color":"red"},{"text":"] File: %s","color":"white"}]' % (tag,i.replace("\\","/"))
           mcr.command(cmd)
   return error
 
@@ -56,6 +59,10 @@ class Payload(BaseModel):
 @app.post("/payload")
 def listner(data:Payload):
   global datapack_path
+  if config.TELL_TAG:
+    tag = f"[tag={config.TELL_TAG}]"
+  else:
+    tag = ""
   if config.GITHUB_ACTIONS:
     if data.action == "completed":
         if data.workflow_run["conclusion"] == "success":
@@ -63,8 +70,8 @@ def listner(data:Payload):
           if config.TELL_INFO:
             with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
               mcr.command(
-                'tellraw @a [{"text":"["},{"text":"GITHUB ACTINOS","color":"gray"},{"text":"]","color":"white"},{"text":" %s "},{"text":"%s ","color":"green"},{"text":"(","color":"white"},{"text":"Summary","color":"aqua","clickEvent":{"action":"open_url","value":"%s"}},{"text":")","color":"white"}]' 
-                % (data.workflow_run["name"],data.workflow_run["conclusion"],data.workflow_run["html_url"])
+                'tellraw @a%s [{"text":"["},{"text":"GITHUB ACTINOS","color":"gray"},{"text":"]","color":"white"},{"text":" %s "},{"text":"%s ","color":"green"},{"text":"(","color":"white"},{"text":"Summary","color":"aqua","clickEvent":{"action":"open_url","value":"%s"}},{"text":")","color":"white"}]' 
+                % (tag,data.workflow_run["name"],data.workflow_run["conclusion"],data.workflow_run["html_url"])
                 )
           if config.AUTO_RELOAD:
             with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
@@ -77,7 +84,7 @@ def listner(data:Payload):
                 mcr.command("reload")
           with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
             mcr.command(
-              'tellraw @a [{"text":"["},{"text":"GITHUB ACTINOS","color":"gray"},{"text":"]","color":"white"},{"text":" %s "},{"text":"%s ","color":"red"},{"text":"(","color":"white"},{"text":"Summary","color":"aqua","clickEvent":{"action":"open_url","value":"%s"}},{"text":")","color":"white"}]' 
+              'tellraw @a%s [{"text":"["},{"text":"GITHUB ACTINOS","color":"gray"},{"text":"]","color":"white"},{"text":" %s "},{"text":"%s ","color":"red"},{"text":"(","color":"white"},{"text":"Summary","color":"aqua","clickEvent":{"action":"open_url","value":"%s"}},{"text":")","color":"white"}]' 
               % (data.workflow_run["name"],data.workflow_run["conclusion"],data.workflow_run["html_url"])
               )
         else:
@@ -95,7 +102,7 @@ def listner(data:Payload):
     if config.TELL_INFO:
       with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
         for c in data.commits:
-          mcr.command('tellraw @a [{"text":"["},{"text":"NEW COMMIT","color":"green"},{"text":"] %s ","color":"white"},{"text":"(","color":"white"},{"text":"%s","color":"aqua","clickEvent":{"action":"open_url","value":"%s"}},{"text":")","color":"white"}]' % (c["message"].replace("\"","\\\""),c["id"][:7],c["url"]))
+          mcr.command('tellraw @a%s [{"text":"["},{"text":"NEW COMMIT","color":"green"},{"text":"] %s ","color":"white"},{"text":"(","color":"white"},{"text":"%s","color":"aqua","clickEvent":{"action":"open_url","value":"%s"}},{"text":")","color":"white"}]' % (tag,c["message"].replace("\"","\\\""),c["id"][:7],c["url"]))
     if config.AUTO_RELOAD:
       with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
         mcr.command("reload")

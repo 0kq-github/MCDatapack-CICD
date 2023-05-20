@@ -26,6 +26,9 @@ AUTO_RELOAD = False
 #サーバー内への通知 (RCON設定が必須)
 TELL_INFO = True
 
+#特定のタグを持つプレイヤーにのみ通知を送る
+TELL_TAG = "op"
+
 #RCON設定
 RCON_ADDRESS = "127.0.0.1"
 RCON_PORT = 25575
