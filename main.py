@@ -1,4 +1,6 @@
-from flask import Flask, request
+from fastapi import FastAPI
+from pydantic import BaseModel
+import uvicorn
 import mecha
 from mcrcon import MCRcon
 import glob
@@ -6,8 +8,9 @@ import config
 import logging
 import sys
 from git import Repo
+import json
 
-app = Flask(__name__)
+app = FastAPI()
 mc = mecha.Mecha()
 
 if config.DATAPACK_NAME:
@@ -32,72 +35,73 @@ def validate_datapack():
   report = mecha.DiagnosticCollection()
   for i in glob.glob(datapack_path+"/**/*.mcfunction",recursive=True):
     try:
-      mc.compile(open(i,mode="r",encoding="utf-8").read())
+      with open(i,mode="r",encoding="utf-8") as f:
+        mc.compile(f.read())
     except mecha.diagnostic.DiagnosticError as e:
       error = True
       logger.error(f"File: {i} {e}")
       if config.TELL_INFO:
         with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
-          cmd = 'tellraw @a [{"text":"["},{"text":"DATAPACK VALIDATION ERROR","color":"red"},{"text":"] File: %s","color":"white"}]' % (i.replace("\\","/"))
+          cmd = 'tellraw @a [{"text":"["},{"text":"VALIDATION ERROR","color":"red"},{"text":"] File: %s","color":"white"}]' % (i.replace("\\","/"))
           mcr.command(cmd)
   return error
 
-@app.route("/",methods=["POST"])
-def listner():
+class Payload(BaseModel):
+  ref: str = None
+  commits: list = None
+  action: str = None
+  workflow_run: dict = None
+
+
+@app.post("/payload")
+def listner(data:Payload):
   global datapack_path
-  #logger.info(f"Received webhook: {request.json}")
-  if request.method == "POST":
-    data = request.json
-    if config.GITHUB_ACTIONS:
-      if "action" in data.keys():
-        if data["action"] == "completed":
-          if data["workflow_run"]["conclusion"] == "success":
+  if config.GITHUB_ACTIONS:
+    if data.action == "completed":
+        if data.workflow_run["conclusion"] == "success":
+          Repo(datapack_path).remote().pull()
+          if config.TELL_INFO:
+            with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
+              mcr.command(
+                'tellraw @a [{"text":"["},{"text":"GITHUB ACTINOS","color":"gray"},{"text":"]","color":"white"},{"text":" %s "},{"text":"%s ","color":"green"},{"text":"(","color":"white"},{"text":"Summary","color":"aqua","clickEvent":{"action":"open_url","value":"%s"}},{"text":")","color":"white"}]' 
+                % (data.workflow_run["name"],data.workflow_run["conclusion"],data.workflow_run["html_url"])
+                )
+          if config.AUTO_RELOAD:
+            with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
+              mcr.command("reload")
+        elif config.TELL_INFO:
+          if config.IGNORE_VALIDATE_ERROR:
             Repo(datapack_path).remote().pull()
-            if config.TELL_INFO:
-              with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
-                mcr.command(
-                  'tellraw @a [{"text":"["},{"text":"GITHUB ACTINOS","color":"gray"},{"text":"]","color":"white"},{"text":" %s "},{"text":"%s ","color":"green"},{"text":"(","color":"white"},{"text":"Summary","color":"aqua","clickEvent":{"action":"open_url","value":"%s"}},{"text":")","color":"white"}]' 
-                  % (data["workflow_run"]["name"],data["workflow_run"]["conclusion"],data["workflow_run"]["html_url"])
-                  )
             if config.AUTO_RELOAD:
               with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
                 mcr.command("reload")
-          elif config.TELL_INFO:
-            if config.IGNORE_VALIDATE_ERROR:
-              Repo(datapack_path).remote().pull()
-              if config.AUTO_RELOAD:
-                with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
-                  mcr.command("reload")
-            with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
-              mcr.command(
-                'tellraw @a [{"text":"["},{"text":"GITHUB ACTINOS","color":"gray"},{"text":"]","color":"white"},{"text":" %s "},{"text":"%s ","color":"red"},{"text":"(","color":"white"},{"text":"Summary","color":"aqua","clickEvent":{"action":"open_url","value":"%s"}},{"text":")","color":"white"}]' 
-                % (data["workflow_run"]["name"],data["workflow_run"]["conclusion"],data["workflow_run"]["html_url"])
-                )
-          else:
-            if config.IGNORE_VALIDATE_ERROR:
-              Repo(datapack_path).remote().pull()
-            return "",200
-      else:
-        return "",200
-    elif "ref" in data.keys():
-      if data["ref"] == "refs/heads/"+config.BRANCH:
-        if config.LOCAL_VALIDATE_DATAPACK:
-          error = validate_datapack()
-          if not config.IGNORE_VALIDATE_ERROR and error:
-            return "",200
-        Repo(datapack_path).remote().pull()
-        for c in data['commits']:
-          logger.info(f"New Commit! {c['message']}")
-        if config.TELL_INFO:
           with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
-            for c in data["commits"]:
-              mcr.command('tellraw @a [{"text":"["},{"text":"NEW COMMIT","color":"green"},{"text":"] %s","color":"white"}]' % c["message"].replace("\"","\\\""))
-        if config.AUTO_RELOAD:
-          with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
-            mcr.command("reload")
-    return "",200
+            mcr.command(
+              'tellraw @a [{"text":"["},{"text":"GITHUB ACTINOS","color":"gray"},{"text":"]","color":"white"},{"text":" %s "},{"text":"%s ","color":"red"},{"text":"(","color":"white"},{"text":"Summary","color":"aqua","clickEvent":{"action":"open_url","value":"%s"}},{"text":")","color":"white"}]' 
+              % (data.workflow_run["name"],data.workflow_run["conclusion"],data.workflow_run["html_url"])
+              )
+        else:
+          if config.IGNORE_VALIDATE_ERROR:
+            Repo(datapack_path).remote().pull()
+  
+  if data.ref == "refs/heads/"+config.BRANCH:
+    if config.LOCAL_VALIDATE_DATAPACK:
+      error = validate_datapack()
+      if not config.IGNORE_VALIDATE_ERROR and error:
+        return 200
+    Repo(datapack_path).remote().pull()
+    for c in data.commits:
+      logger.info(f"New Commit! {c['message']}")
+    if config.TELL_INFO:
+      with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
+        for c in data.commits:
+          mcr.command('tellraw @a [{"text":"["},{"text":"NEW COMMIT","color":"green"},{"text":"] %s ","color":"white"},{"text":"(","color":"white"},{"text":"%s","color":"aqua","clickEvent":{"action":"open_url","value":"%s"}},{"text":")","color":"white"}]' % (c["message"].replace("\"","\\\""),c["id"][:7],c["url"]))
+    if config.AUTO_RELOAD:
+      with MCRcon(config.RCON_ADDRESS,config.RCON_PASSWORD,config.RCON_PORT) as mcr:
+        mcr.command("reload")
+  return 200
 
 if __name__ == "__main__":
   setup_logging()
-  app.run(debug=True,use_reloader=False,threaded=False,host="0.0.0.0",port=config.LISTEN_PORT)
+  uvicorn.run(app,host="0.0.0.0",port=config.LISTEN_PORT)
   

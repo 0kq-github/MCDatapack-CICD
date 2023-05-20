@@ -2,14 +2,14 @@
 LISTEN_PORT = 8080
 
 #ブランチ
-BRANCH = "develop"
+BRANCH = "main"
 
 #データパックの検証
-#ローカルで検証を行う
-LOCAL_VALIDATE_DATAPACK = True
+#ローカルで検証を行う(mecha)
+LOCAL_VALIDATE_DATAPACK = False
 #GitHub Actionsで検証を行う
 #この項目が有効な場合pullはActionsの後に実行されます
-GITHUB_ACTIONS = False
+GITHUB_ACTIONS = True
 
 #検証時のエラーを無視してサーバーへの適用を行うかどうか
 IGNORE_VALIDATE_ERROR = False
@@ -24,7 +24,7 @@ DATAPACK_NAME = ""
 AUTO_RELOAD = False
 
 #サーバー内への通知 (RCON設定が必須)
-TELL_INFO = False
+TELL_INFO = True
 
 #RCON設定
 RCON_ADDRESS = "127.0.0.1"
